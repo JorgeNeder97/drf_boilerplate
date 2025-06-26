@@ -1,0 +1,44 @@
+services:
+  # En este caso usamos nombres como backend porque es la primera vez que hacemos esto
+  # Pero los nombres deben ser mas especificos y representativos porque pueden dar lugar a confusiones
+
+  # Django App
+  backend:
+   container_name: django
+   build: .
+   command: uvicorn core.asgi:application --host 0.0.0.0 --port 8000 --reload
+   volumes:
+    - .:/app
+   ports:
+    - 8000:8000
+  # Aqui le indicamos que depende de django_redis, osea que primero ejecute django_redis y luego django_app
+   depends_on:
+    - django_redis
+
+  # Redis
+  django_redis:
+   image: redis
+   container_name: django_redis
+   ports:
+    # Puerto por defecto de redis
+    - 6379:6379
+  
+  # DataBase (aqui definimos nuestra imagen de postgresql)
+  django_db:
+  # nombre de la imagen
+   image: postgres
+  # Nombre del contenedor
+   container_name: postgresql
+   # Indicamos que en caso de que haya un error se reinicie siempre la base de datos
+   restart: always
+  #  Le indicamos las variables de entorno
+   environment:
+  # (el primero es el nombre de la base de datos)
+    POSTGRES_DB: django_db
+    POSTGRES_USER: django
+    POSTGRES_PASSWORD: postgres
+   ports:
+    - 5432:5432
+   volumes:
+    - .dbdata:/var/lib/postgresql
+
